@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<title>Pet Slot System</title>
+<title>Fix Pet UI</title>
 
 <style>
 html, body {
@@ -13,7 +13,6 @@ html, body {
     width: 100%;
     height: 100%;
     font-family: monospace;
-    touch-action: none;
 }
 
 canvas {
@@ -21,7 +20,6 @@ canvas {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    background: black;
 }
 
 #ui {
@@ -62,6 +60,13 @@ canvas {
     white-space: pre;
 }
 
+#tempBox {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+}
 </style>
 </head>
 
@@ -70,6 +75,8 @@ canvas {
 <canvas id="game" width="1024" height="1024"></canvas>
 
 <div id="ui">
+
+    <div id="tempBox"></div>
 
     <img id="slot1" class="btn" src="image/1btn.png">
     <img id="slot2" class="btn" src="image/2btn.png">
@@ -87,58 +94,48 @@ canvas {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// ---------------- WORLD ----------------
 const bg = new Image();
 bg.src = "image/s1.png";
 
-const playerImg = new Image();
-playerImg.src = "image/player.png";
+const player = new Image();
+player.src = "image/player.png";
 
-const player = {
-    x: 462,
-    y: 462,
-    size: 100
-};
-
-// ---------------- STATE ----------------
 const state = {
     coin: 5,
     slots: [null, null, null],
     tempPet: null
 };
 
-// ---------------- PET DATA ----------------
 const pets = [
     { name:"Bronze PSH", damage:1, speed:500, range:10, sprite:"image/bpsh.png" },
     { name:"Silver PSH", damage:1, speed:250, range:10, sprite:"image/spsh.png" },
     { name:"Gold PSH", damage:2, speed:250, range:10, sprite:"image/gpsh.png" }
 ];
 
-// ---------------- RENDER ----------------
+// ---------------- WORLD ----------------
 function draw() {
     ctx.clearRect(0,0,1024,1024);
 
     ctx.drawImage(bg,0,0,1024,1024);
-    ctx.drawImage(playerImg, player.x, player.y, 100, 100);
+    ctx.drawImage(player,462,462,100,100);
 
     renderPets();
-
     requestAnimationFrame(draw);
 }
 
-// ---------------- PET RENDER ----------------
+// ---------------- PETS ----------------
 function renderPets() {
 
-    const px = player.x;
-    const py = player.y;
+    const px = 462;
+    const py = 462;
 
     const pos = [
-        { x: px, y: py - 120 },      // 1번 위
-        { x: px + 90, y: py + 90 },  // 2번 5시
-        { x: px - 90, y: py + 90 }   // 3번 7시
+        {x:px, y:py-120},
+        {x:px+90, y:py+90},
+        {x:px-90, y:py+90}
     ];
 
-    for (let i = 0; i < 3; i++) {
+    for (let i=0;i<3;i++) {
         const pet = state.slots[i];
         if (!pet) continue;
 
@@ -153,10 +150,28 @@ function renderPets() {
 function updateUI() {
 
     document.getElementById("stateText").innerText =
-`coin: ${state.coin}
-slot1: ${state.slots[0]?.name || "null"}
-slot2: ${state.slots[1]?.name || "null"}
-slot3: ${state.slots[2]?.name || "null"}`;
+`coin:${state.coin}
+slot1:${state.slots[0]?.name || "null"}
+slot2:${state.slots[1]?.name || "null"}
+slot3:${state.slots[2]?.name || "null"}`;
+
+    const tempBox = document.getElementById("tempBox");
+
+    if (state.tempPet) {
+        tempBox.innerText = "NEW PET: " + state.tempPet.name;
+        setButtons(true);   // ✔ 핵심
+    } else {
+        tempBox.innerText = "";
+        setButtons(false);  // ✔ 핵심
+    }
+}
+
+// ---------------- BUTTON CONTROL ----------------
+function setButtons(show) {
+    document.getElementById("slot1").style.display = show ? "block" : "none";
+    document.getElementById("slot2").style.display = show ? "block" : "none";
+    document.getElementById("slot3").style.display = show ? "block" : "none";
+    document.getElementById("throwBtn").style.display = show ? "block" : "none";
 }
 
 // ---------------- ROLL ----------------
@@ -166,36 +181,31 @@ document.getElementById("rollBtn").onclick = () => {
 
     state.coin--;
 
-    const rand = Math.floor(Math.random() * 3);
+    state.tempPet = {...pets[Math.floor(Math.random()*3)]};
 
-    state.tempPet = { ...pets[rand] };
-
-    updateUI();
+    updateUI(); // ✔ 반드시 호출
 };
 
 // ---------------- SLOT ----------------
-slot1.onclick = () => {
-    if (!state.tempPet) return;
+document.getElementById("slot1").onclick = () => {
     state.slots[0] = state.tempPet;
     state.tempPet = null;
     updateUI();
 };
 
-slot2.onclick = () => {
-    if (!state.tempPet) return;
+document.getElementById("slot2").onclick = () => {
     state.slots[1] = state.tempPet;
     state.tempPet = null;
     updateUI();
 };
 
-slot3.onclick = () => {
-    if (!state.tempPet) return;
+document.getElementById("slot3").onclick = () => {
     state.slots[2] = state.tempPet;
     state.tempPet = null;
     updateUI();
 };
 
-throwBtn.onclick = () => {
+document.getElementById("throwBtn").onclick = () => {
     state.tempPet = null;
     updateUI();
 };
