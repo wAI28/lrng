@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<title>Pet Fix</title>
+<title>Pet Slot System</title>
 
 <style>
 html, body {
@@ -13,6 +13,7 @@ html, body {
     width: 100%;
     height: 100%;
     font-family: monospace;
+    touch-action: none;
 }
 
 canvas {
@@ -35,7 +36,7 @@ canvas {
 
 .btn {
     position: absolute;
-    width: 140px;
+    width: 120px;
     height: 60px;
     pointer-events: auto;
     display: none;
@@ -49,9 +50,9 @@ canvas {
 }
 
 #slot1 { bottom: 100px; left: 20px; }
-#slot2 { bottom: 100px; left: 170px; }
-#slot3 { bottom: 100px; left: 320px; }
-#throwBtn { bottom: 100px; left: 470px; }
+#slot2 { bottom: 100px; left: 160px; }
+#slot3 { bottom: 100px; left: 300px; }
+#throwBtn { bottom: 100px; left: 440px; }
 
 #stateText {
     position: absolute;
@@ -61,14 +62,6 @@ canvas {
     white-space: pre;
 }
 
-#tempBox {
-    position: absolute;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    text-align: center;
-}
 </style>
 </head>
 
@@ -77,8 +70,6 @@ canvas {
 <canvas id="game" width="1024" height="1024"></canvas>
 
 <div id="ui">
-
-    <div id="tempBox"></div>
 
     <img id="slot1" class="btn" src="image/1btn.png">
     <img id="slot2" class="btn" src="image/2btn.png">
@@ -92,15 +83,22 @@ canvas {
 </div>
 
 <script>
-// ---------------- CANVAS ----------------
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// ---------------- WORLD ----------------
 const bg = new Image();
 bg.src = "image/s1.png";
 
-const player = new Image();
-player.src = "image/player.png";
+const playerImg = new Image();
+playerImg.src = "image/player.png";
+
+const player = {
+    x: 462,
+    y: 462,
+    size: 100
+};
 
 // ---------------- STATE ----------------
 const state = {
@@ -116,77 +114,82 @@ const pets = [
     { name:"Gold PSH", damage:2, speed:250, range:10, sprite:"image/gpsh.png" }
 ];
 
-// ---------------- RENDER WORLD ----------------
+// ---------------- RENDER ----------------
 function draw() {
     ctx.clearRect(0,0,1024,1024);
 
     ctx.drawImage(bg,0,0,1024,1024);
-    ctx.drawImage(player,462,462,100,100);
+    ctx.drawImage(playerImg, player.x, player.y, 100, 100);
 
-    // ✅ TEMP PET IMAGE 표시 (핵심 추가)
-    if (state.tempPet) {
-        const img = new Image();
-        img.src = state.tempPet.sprite;
-        ctx.drawImage(img, 462, 350, 100, 100);
-    }
+    renderPets();
 
     requestAnimationFrame(draw);
+}
+
+// ---------------- PET RENDER ----------------
+function renderPets() {
+
+    const px = player.x;
+    const py = player.y;
+
+    const pos = [
+        { x: px, y: py - 120 },      // 1번 위
+        { x: px + 90, y: py + 90 },  // 2번 5시
+        { x: px - 90, y: py + 90 }   // 3번 7시
+    ];
+
+    for (let i = 0; i < 3; i++) {
+        const pet = state.slots[i];
+        if (!pet) continue;
+
+        const img = new Image();
+        img.src = pet.sprite;
+
+        ctx.drawImage(img, pos[i].x, pos[i].y, 100, 100);
+    }
 }
 
 // ---------------- UI ----------------
 function updateUI() {
 
     document.getElementById("stateText").innerText =
-`coin:${state.coin}
-pet1:${state.slots[0]?.name || "null"}
-pet2:${state.slots[1]?.name || "null"}
-pet3:${state.slots[2]?.name || "null"}`;
-
-    const tempBox = document.getElementById("tempBox");
-
-    if (state.tempPet) {
-        tempBox.innerText = state.tempPet.name;
-        showButtons(true);
-    } else {
-        tempBox.innerText = "";
-        showButtons(false);
-    }
-}
-
-// ---------------- BUTTON SHOW/HIDE FIX ----------------
-function showButtons(show) {
-    document.getElementById("slot1").style.display = show ? "block" : "none";
-    document.getElementById("slot2").style.display = show ? "block" : "none";
-    document.getElementById("slot3").style.display = show ? "block" : "none"; // ✔ FIX
-    document.getElementById("throwBtn").style.display = show ? "block" : "none";
+`coin: ${state.coin}
+slot1: ${state.slots[0]?.name || "null"}
+slot2: ${state.slots[1]?.name || "null"}
+slot3: ${state.slots[2]?.name || "null"}`;
 }
 
 // ---------------- ROLL ----------------
 document.getElementById("rollBtn").onclick = () => {
+
     if (state.coin <= 0) return;
 
     state.coin--;
 
-    const p = pets[Math.floor(Math.random()*3)];
-    state.tempPet = {...p};
+    const rand = Math.floor(Math.random() * 3);
+
+    state.tempPet = { ...pets[rand] };
 
     updateUI();
 };
 
 // ---------------- SLOT ----------------
 slot1.onclick = () => {
+    if (!state.tempPet) return;
     state.slots[0] = state.tempPet;
     state.tempPet = null;
     updateUI();
 };
 
 slot2.onclick = () => {
+    if (!state.tempPet) return;
     state.slots[1] = state.tempPet;
     state.tempPet = null;
     updateUI();
 };
 
 slot3.onclick = () => {
+    if (!state.tempPet) return;
     state.slots[2] = state.tempPet;
     state.tempPet = null;
     updateUI();
