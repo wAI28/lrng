@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>RNG RPG Base</title>
 
 <style>
@@ -48,6 +48,17 @@ body {
     transform: translateX(-50%);
 }
 
+#stateText {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    color: white;
+    font-size: 16px;
+    font-family: monospace;
+    line-height: 1.4;
+    white-space: pre;
+}
+
 canvas {
     background: black;
     display: block;
@@ -60,6 +71,8 @@ canvas {
 <div id="ui">
     <img id="bossBtn" class="btn" src="image/bossbutton.png">
     <img id="rollBtn" class="btn" src="image/rollbutton.png">
+
+    <div id="stateText"></div>
 </div>
 
 <canvas id="game" width="1024" height="1024"></canvas>
@@ -80,6 +93,26 @@ const player = {
     size: 100
 };
 
+// 🧠 게임 상태
+const state = {
+    gold: 100,
+    heart: 100,
+    stage: 1,
+    pet1: "a",
+    pet2: "b",
+    pet3: "c"
+};
+
+function updateStateUI() {
+    document.getElementById("stateText").innerText =
+`gold:${state.gold}
+stage:${state.stage}
+heart:${state.heart}
+pet1:${state.pet1}
+pet2:${state.pet2}
+pet3:${state.pet3}`;
+}
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -93,6 +126,8 @@ function draw() {
         player.size
     );
 
+    updateStateUI();
+
     requestAnimationFrame(draw);
 }
 
@@ -102,13 +137,14 @@ bg.onload = () => {
     };
 };
 
-// 버튼 이벤트 자리 (나중에 연결)
+// 버튼 테스트
 document.getElementById("rollBtn").onclick = () => {
-    console.log("ROLL");
+    state.gold += 10;
+    state.pet1 = "new";
 };
 
 document.getElementById("bossBtn").onclick = () => {
-    console.log("BOSS");
+    state.stage += 1;
 };
 </script>
 
