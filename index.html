@@ -1,45 +1,45 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>RNG RPG Base</title>
+<meta charset="UTF-8" />
+<title>Pet Gacha Test</title>
 
 <style>
 html, body {
     margin: 0;
     padding: 0;
     background: black;
+    overflow: hidden;
     width: 100%;
     height: 100%;
-    overflow: hidden;
     touch-action: none;
+    font-family: monospace;
 }
 
-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+#game {
+    width: 100%;
+    height: 100%;
+    position: relative;
 }
 
+/* UI 영역 */
 #ui {
     position: absolute;
     width: 1024px;
     height: 1024px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     pointer-events: none;
 }
 
+/* 버튼 */
 .btn {
     position: absolute;
-    width: 220px;
-    height: 80px;
+    width: 140px;
+    height: 60px;
     pointer-events: auto;
-    user-select: none;
-}
-
-#bossBtn {
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    cursor: pointer;
 }
 
 #rollBtn {
@@ -48,104 +48,164 @@ body {
     transform: translateX(-50%);
 }
 
+#slot1 { bottom: 100px; left: 20px; }
+#slot2 { bottom: 100px; left: 170px; }
+#slot3 { bottom: 100px; left: 320px; }
+#throwBtn { bottom: 100px; left: 470px; }
+
+/* 상태창 */
 #stateText {
     position: absolute;
     bottom: 20px;
     left: 20px;
     color: white;
-    font-size: 16px;
-    font-family: monospace;
-    line-height: 1.4;
     white-space: pre;
+    font-size: 14px;
 }
 
-canvas {
-    background: black;
-    display: block;
+/* temp pet 표시 */
+#tempBox {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    text-align: center;
 }
 </style>
 </head>
 
 <body>
 
-<div id="ui">
-    <img id="bossBtn" class="btn" src="image/bossbutton.png">
-    <img id="rollBtn" class="btn" src="image/rollbutton.png">
+<div id="game">
 
-    <div id="stateText"></div>
+    <div id="ui">
+
+        <div id="tempBox"></div>
+
+        <!-- 슬롯 버튼 -->
+        <img id="slot1" class="btn" src="image/1btn.png">
+        <img id="slot2" class="btn" src="image/2btn.png">
+        <img id="slot3" class="btn" src="image/3btn.png">
+        <img id="throwBtn" class="btn" src="image/throwbtn.png">
+
+        <!-- roll -->
+        <img id="rollBtn" class="btn" src="image/rollbutton.png">
+
+        <!-- 상태 -->
+        <div id="stateText"></div>
+
+    </div>
+
 </div>
 
-<canvas id="game" width="1024" height="1024"></canvas>
-
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-const bg = new Image();
-bg.src = "image/s1.png";
-
-const playerImg = new Image();
-playerImg.src = "image/player.png";
-
-const player = {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-    size: 100
-};
-
-// 🧠 게임 상태
+// --------------------
+// STATE
+// --------------------
 const state = {
-    gold: 100,
-    heart: 100,
-    stage: 1,
-    pet1: "a",
-    pet2: "b",
-    pet3: "c"
+    coin: 5,
+    slots: [null, null, null],
+    tempPet: null
 };
 
-function updateStateUI() {
+// --------------------
+// PET DATA (1:1:1)
+// --------------------
+const pets = [
+    {
+        id: "bpsh",
+        name: "Bronze PSH",
+        damage: 1,
+        speed: 500,
+        range: 10
+    },
+    {
+        id: "spsh",
+        name: "Silver PSH",
+        damage: 1,
+        speed: 250,
+        range: 10
+    },
+    {
+        id: "gpsh",
+        name: "Gold PSH",
+        damage: 2,
+        speed: 250,
+        range: 10
+    }
+];
+
+// --------------------
+// UI UPDATE
+// --------------------
+function updateUI() {
     document.getElementById("stateText").innerText =
-`gold:${state.gold}
-stage:${state.stage}
-heart:${state.heart}
-pet1:${state.pet1}
-pet2:${state.pet2}
-pet3:${state.pet3}`;
+`coin:${state.coin}
+pet1:${state.slots[0]?.name || "null"}
+pet2:${state.slots[1]?.name || "null"}
+pet3:${state.slots[2]?.name || "null"}`;
+
+    document.getElementById("tempBox").innerText =
+state.tempPet
+? `NEW PET\n${state.tempPet.name}\nDMG:${state.tempPet.damage}`
+: "NO PET";
 }
 
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-
-    ctx.drawImage(
-        playerImg,
-        player.x - player.size / 2,
-        player.y - player.size / 2,
-        player.size,
-        player.size
-    );
-
-    updateStateUI();
-
-    requestAnimationFrame(draw);
-}
-
-bg.onload = () => {
-    playerImg.onload = () => {
-        draw();
-    };
-};
-
-// 버튼 테스트
+// --------------------
+// ROLL
+// --------------------
 document.getElementById("rollBtn").onclick = () => {
-    state.gold += 10;
-    state.pet1 = "new";
+
+    if (state.coin <= 0) return;
+
+    state.coin--;
+
+    const rand = Math.floor(Math.random() * 3);
+    const p = pets[rand];
+
+    state.tempPet = {
+        ...p
+    };
+
+    updateUI();
 };
 
-document.getElementById("bossBtn").onclick = () => {
-    state.stage += 1;
+// --------------------
+// SLOT BUTTONS
+// --------------------
+document.getElementById("slot1").onclick = () => {
+    if (!state.tempPet) return;
+    state.slots[0] = state.tempPet;
+    state.tempPet = null;
+    updateUI();
 };
+
+document.getElementById("slot2").onclick = () => {
+    if (!state.tempPet) return;
+    state.slots[1] = state.tempPet;
+    state.tempPet = null;
+    updateUI();
+};
+
+document.getElementById("slot3").onclick = () => {
+    if (!state.tempPet) return;
+    state.slots[2] = state.tempPet;
+    state.tempPet = null;
+    updateUI();
+};
+
+// --------------------
+// THROW AWAY
+// --------------------
+document.getElementById("throwBtn").onclick = () => {
+    state.tempPet = null;
+    updateUI();
+};
+
+// init
+updateUI();
+
 </script>
 
 </body>
