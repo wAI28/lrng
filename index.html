@@ -9,14 +9,22 @@ html, body {
     margin: 0;
     padding: 0;
     background: black;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;          /* 핵심: 스크롤 차단 */
+    touch-action: none;        /* 핵심: 모바일 제스처 차단 */
+}
+
+body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
 }
 
 canvas {
     background: black;
+    display: block;
+    touch-action: none;        /* 캔버스 드래그/슬라이드 차단 */
 }
 </style>
 </head>
@@ -29,28 +37,27 @@ canvas {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// 이미지 로드
+// 이미지
 const bg = new Image();
 bg.src = "image/s1.png";
 
 const playerImg = new Image();
 playerImg.src = "image/player.png";
 
-// 플레이어 위치 (중앙 고정)
+// 플레이어
 const player = {
     x: canvas.width / 2,
     y: canvas.height / 2,
     size: 100
 };
 
-// 렌더링
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 배경 (전체 채우기)
+    // 배경
     ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
-    // 플레이어 (중앙)
+    // 플레이어 중앙
     ctx.drawImage(
         playerImg,
         player.x - player.size / 2,
@@ -68,6 +75,23 @@ bg.onload = () => {
         draw();
     };
 };
+
+// 추가: 브라우저 제스처 완전 차단
+document.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+}, { passive: false });
+
+document.addEventListener("gesturestart", (e) => {
+    e.preventDefault();
+});
+
+document.addEventListener("gesturechange", (e) => {
+    e.preventDefault();
+});
+
+document.addEventListener("gestureend", (e) => {
+    e.preventDefault();
+});
 </script>
 
 </body>
