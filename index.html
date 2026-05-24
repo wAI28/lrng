@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>RNG RPG Base</title>
 
 <style>
@@ -11,8 +11,8 @@ html, body {
     background: black;
     width: 100%;
     height: 100%;
-    overflow: hidden;          /* 핵심: 스크롤 차단 */
-    touch-action: none;        /* 핵심: 모바일 제스처 차단 */
+    overflow: hidden;
+    touch-action: none;
 }
 
 body {
@@ -21,15 +21,46 @@ body {
     align-items: center;
 }
 
+#ui {
+    position: absolute;
+    width: 1024px;
+    height: 1024px;
+    pointer-events: none;
+}
+
+.btn {
+    position: absolute;
+    width: 220px;
+    height: 80px;
+    pointer-events: auto;
+    user-select: none;
+}
+
+#bossBtn {
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#rollBtn {
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
 canvas {
     background: black;
     display: block;
-    touch-action: none;        /* 캔버스 드래그/슬라이드 차단 */
 }
 </style>
 </head>
 
 <body>
+
+<div id="ui">
+    <img id="bossBtn" class="btn" src="image/bossbutton.png">
+    <img id="rollBtn" class="btn" src="image/rollbutton.png">
+</div>
 
 <canvas id="game" width="1024" height="1024"></canvas>
 
@@ -37,14 +68,12 @@ canvas {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// 이미지
 const bg = new Image();
 bg.src = "image/s1.png";
 
 const playerImg = new Image();
 playerImg.src = "image/player.png";
 
-// 플레이어
 const player = {
     x: canvas.width / 2,
     y: canvas.height / 2,
@@ -54,10 +83,8 @@ const player = {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 배경
     ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
-    // 플레이어 중앙
     ctx.drawImage(
         playerImg,
         player.x - player.size / 2,
@@ -69,29 +96,20 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// 이미지 로딩 후 시작
 bg.onload = () => {
     playerImg.onload = () => {
         draw();
     };
 };
 
-// 추가: 브라우저 제스처 완전 차단
-document.addEventListener("touchmove", (e) => {
-    e.preventDefault();
-}, { passive: false });
+// 버튼 이벤트 자리 (나중에 연결)
+document.getElementById("rollBtn").onclick = () => {
+    console.log("ROLL");
+};
 
-document.addEventListener("gesturestart", (e) => {
-    e.preventDefault();
-});
-
-document.addEventListener("gesturechange", (e) => {
-    e.preventDefault();
-});
-
-document.addEventListener("gestureend", (e) => {
-    e.preventDefault();
-});
+document.getElementById("bossBtn").onclick = () => {
+    console.log("BOSS");
+};
 </script>
 
 </body>
