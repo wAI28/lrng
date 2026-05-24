@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>RNG RPG Base</title>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+canvas {
+    background: black;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game" width="1024" height="1024"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// 이미지 로드
+const bg = new Image();
+bg.src = "image/s1.png";
+
+const playerImg = new Image();
+playerImg.src = "image/player.png";
+
+// 플레이어 위치 (중앙 고정)
+const player = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    size: 100
+};
+
+// 렌더링
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 배경 (전체 채우기)
+    ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+
+    // 플레이어 (중앙)
+    ctx.drawImage(
+        playerImg,
+        player.x - player.size / 2,
+        player.y - player.size / 2,
+        player.size,
+        player.size
+    );
+
+    requestAnimationFrame(draw);
+}
+
+// 이미지 로딩 후 시작
+bg.onload = () => {
+    playerImg.onload = () => {
+        draw();
+    };
+};
+</script>
+
+</body>
+</html>
