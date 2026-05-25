@@ -149,6 +149,24 @@ const pets = [
     sprite:"image/gpsh.png",
     lastAttack:0,
     effect:0
+},
+{
+    name:"Diamond PSH",
+    damage:10,
+    speed:500,
+    range:200,
+    sprite:"image/dpsh.png",
+    lastAttack:0,
+    effect:0
+},
+{
+    name:"Ruby PSH",
+    damage:10,
+    speed:100,
+    range:150,
+    sprite:"image/rpsh.png",
+    lastAttack:0,
+    effect:0
 }
 ];
 
@@ -180,25 +198,21 @@ function spawnMonster(){
     let x = 0;
     let y = 0;
 
-    // 위
     if(side === 0){
         x = Math.random() * 1024;
         y = -120;
     }
 
-    // 아래
     if(side === 1){
         x = Math.random() * 1024;
         y = 1144;
     }
 
-    // 왼쪽
     if(side === 2){
         x = -120;
         y = Math.random() * 1024;
     }
 
-    // 오른쪽
     if(side === 3){
         x = 1144;
         y = Math.random() * 1024;
@@ -230,7 +244,6 @@ function draw(){
 
     ctx.drawImage(bg,0,0,1024,1024);
 
-    // 공격 이펙트 먼저 그림 (z 아래)
     renderPetEffects();
 
     renderPlayer();
@@ -358,7 +371,6 @@ function petAttack(){
         }
     }
 
-    // 죽은 몬스터 처리
     for(let i=monsters.length-1;i>=0;i--){
 
         if(monsters[i].hp <= 0){
@@ -506,7 +518,7 @@ document.getElementById("rollBtn").onclick = () => {
     state.coin--;
 
     const rand =
-    Math.floor(Math.random() * 3);
+    Math.floor(Math.random() * pets.length);
 
     state.tempPet =
     JSON.parse(
