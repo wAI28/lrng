@@ -2,16 +2,16 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<title>Pet Slot System Final UI Fix</title>
+<title>Pet Battle Game</title>
 
 <style>
 html, body {
     margin: 0;
     padding: 0;
-    background: black;
-    overflow: hidden;
     width: 100%;
     height: 100%;
+    overflow: hidden;
+    background: black;
     font-family: monospace;
 }
 
@@ -55,8 +55,8 @@ canvas {
 
 #stateText {
     position: absolute;
-    bottom: 20px;
     left: 20px;
+    bottom: 20px;
     color: white;
     white-space: pre;
 }
@@ -67,9 +67,7 @@ canvas {
     left: 50%;
     transform: translateX(-50%);
     color: white;
-    text-align: center;
 }
-
 </style>
 </head>
 
@@ -97,14 +95,24 @@ canvas {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// ---------------- WORLD ----------------
+// ---------------- IMAGES ----------------
 const bg = new Image();
 bg.src = "image/s1.png";
 
 const playerImg = new Image();
 playerImg.src = "image/player.png";
 
-const player = { x: 462, y: 462 };
+const monsterImg = new Image();
+monsterImg.src = "image/s1m.png";
+
+const coinImg = new Image();
+coinImg.src = "image/coin.png";
+
+// ---------------- PLAYER ----------------
+const player = {
+    x: 462,
+    y: 462
+};
 
 // ---------------- STATE ----------------
 const state = {
@@ -115,43 +123,257 @@ const state = {
 
 // ---------------- PET DATA ----------------
 const pets = [
-    { name:"Bronze PSH", damage:1, speed:500, range:10, sprite:"image/bpsh.png" },
-    { name:"Silver PSH", damage:1, speed:250, range:10, sprite:"image/spsh.png" },
-    { name:"Gold PSH", damage:2, speed:250, range:10, sprite:"image/gpsh.png" }
+    {
+        name:"Bronze PSH",
+        damage:1,
+        speed:500,
+        range:120,
+        sprite:"image/bpsh.png",
+        lastAttack:0,
+        effect:0
+    },
+    {
+        name:"Silver PSH",
+        damage:1,
+        speed:250,
+        range:140,
+        sprite:"image/spsh.png",
+        lastAttack:0,
+        effect:0
+    },
+    {
+        name:"Gold PSH",
+        damage:2,
+        speed:250,
+        range:170,
+        sprite:"image/gpsh.png",
+        lastAttack:0,
+        effect:0
+    }
 ];
+
+// ---------------- MONSTERS ----------------
+const monsters = [];
+
+// ---------------- COINS ----------------
+const coins = [];
+
+// ---------------- MONSTER SPAWN ----------------
+setInterval(spawnMonster, 2000);
+
+function spawnMonster() {
+
+    const side = Math.floor(Math.random() * 4);
+
+    let x = 0;
+    let y = 0;
+
+    // 위
+    if (side === 0) {
+        x = Math.random() * 1024;
+        y = -120;
+    }
+
+    // 아래
+    if (side === 1) {
+        x = Math.random() * 1024;
+        y = 1144;
+    }
+
+    // 왼쪽
+    if (side === 2) {
+        x = -120;
+        y = Math.random() * 1024;
+    }
+
+    // 오른쪽
+    if (side === 3) {
+        x = 1144;
+        y = Math.random() * 1024;
+    }
+
+    monsters.push({
+        x: x,
+        y: y,
+        hp: 10,
+        speed: 0.3
+    });
+}
 
 // ---------------- DRAW ----------------
 function draw() {
+
     ctx.clearRect(0,0,1024,1024);
 
     ctx.drawImage(bg,0,0,1024,1024);
-    ctx.drawImage(playerImg,player.x,player.y,100,100);
 
+    renderPlayer();
     renderPets();
+    renderMonsters();
+    renderCoins();
+
+    updateMonsters();
+    updateCoins();
+    petAttack();
 
     requestAnimationFrame(draw);
 }
 
-// ---------------- PET RENDER ----------------
+// ---------------- PLAYER ----------------
+function renderPlayer() {
+    ctx.drawImage(playerImg,player.x,player.y,100,100);
+}
+
+// ---------------- PETS ----------------
 function renderPets() {
 
-    const px = player.x;
-    const py = player.y;
-
     const pos = [
-        { x: px, y: py - 120 },      // 1
-        { x: px + 90, y: py + 90 },  // 2
-        { x: px - 90, y: py + 90 }   // 3
+        { x: player.x, y: player.y - 120 },
+        { x: player.x + 90, y: player.y + 90 },
+        { x: player.x - 90, y: player.y + 90 }
     ];
 
-    for (let i = 0; i < 3; i++) {
+    for (let i=0;i<3;i++) {
+
         const pet = state.slots[i];
         if (!pet) continue;
 
         const img = new Image();
         img.src = pet.sprite;
 
-        ctx.drawImage(img, pos[i].x, pos[i].y, 100, 100);
+        ctx.drawImage(img,pos[i].x,pos[i].y,100,100);
+
+        // 공격 이펙트
+        if (Date.now() - pet.effect < 100) {
+
+            ctx.beginPath();
+
+            ctx.arc(
+                pos[i].x + 50,
+                pos[i].y + 50,
+                pet.range,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fillStyle = "rgba(255,0,0,0.3)";
+            ctx.fill();
+        }
+    }
+}
+
+// ---------------- PET ATTACK ----------------
+function petAttack() {
+
+    const now = Date.now();
+
+    const pos = [
+        { x: player.x, y: player.y - 120 },
+        { x: player.x + 90, y: player.y + 90 },
+        { x: player.x - 90, y: player.y + 90 }
+    ];
+
+    for (let i=0;i<3;i++) {
+
+        const pet = state.slots[i];
+        if (!pet) continue;
+
+        if (now - pet.lastAttack < pet.speed) continue;
+
+        pet.lastAttack = now;
+        pet.effect = now;
+
+        for (let m of monsters) {
+
+            const dx = (m.x + 50) - (pos[i].x + 50);
+            const dy = (m.y + 50) - (pos[i].y + 50);
+
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist <= pet.range) {
+                m.hp -= pet.damage;
+            }
+        }
+    }
+
+    // 죽은 몬스터 처리
+    for (let i=monsters.length-1;i>=0;i--) {
+
+        if (monsters[i].hp <= 0) {
+
+            coins.push({
+                x: monsters[i].x,
+                y: monsters[i].y
+            });
+
+            monsters.splice(i,1);
+        }
+    }
+}
+
+// ---------------- MONSTERS ----------------
+function renderMonsters() {
+
+    for (let m of monsters) {
+
+        ctx.drawImage(monsterImg,m.x,m.y,100,100);
+
+        ctx.fillStyle = "white";
+        ctx.font = "20px monospace";
+        ctx.textAlign = "center";
+
+        ctx.fillText(
+            "HP:"+m.hp,
+            m.x + 50,
+            m.y - 10
+        );
+    }
+}
+
+function updateMonsters() {
+
+    for (let m of monsters) {
+
+        const dx = player.x - m.x;
+        const dy = player.y - m.y;
+
+        const dist = Math.sqrt(dx*dx + dy*dy);
+
+        m.x += (dx / dist) * m.speed;
+        m.y += (dy / dist) * m.speed;
+    }
+}
+
+// ---------------- COINS ----------------
+function renderCoins() {
+
+    for (let c of coins) {
+        ctx.drawImage(coinImg,c.x,c.y,50,50);
+    }
+}
+
+function updateCoins() {
+
+    for (let i=coins.length-1;i>=0;i--) {
+
+        const c = coins[i];
+
+        const dx = player.x - c.x;
+        const dy = player.y - c.y;
+
+        const dist = Math.sqrt(dx*dx + dy*dy);
+
+        c.x += (dx / dist) * 2;
+        c.y += (dy / dist) * 2;
+
+        if (dist < 40) {
+
+            state.coin += 1;
+
+            coins.splice(i,1);
+
+            updateUI();
+        }
     }
 }
 
@@ -167,24 +389,37 @@ slot3: ${state.slots[2]?.name || "null"}`;
     const tempBox = document.getElementById("tempBox");
 
     if (state.tempPet) {
-        tempBox.innerText = "NEW PET: " + state.tempPet.name;
+
+        tempBox.innerText =
+        "NEW PET: " + state.tempPet.name;
+
         setButtons(true);
+
     } else {
+
         tempBox.innerText = "";
+
         setButtons(false);
     }
 }
 
-// ---------------- BUTTON CONTROL ----------------
-function setButtons(showSelect) {
+// ---------------- BUTTONS ----------------
+function setButtons(show) {
 
-    document.getElementById("slot1").style.display = showSelect ? "block" : "none";
-    document.getElementById("slot2").style.display = showSelect ? "block" : "none";
-    document.getElementById("slot3").style.display = showSelect ? "block" : "none";
-    document.getElementById("throwBtn").style.display = showSelect ? "block" : "none";
+    document.getElementById("slot1").style.display =
+    show ? "block" : "none";
 
-    // roll toggle
-    document.getElementById("rollBtn").style.display = showSelect ? "none" : "block";
+    document.getElementById("slot2").style.display =
+    show ? "block" : "none";
+
+    document.getElementById("slot3").style.display =
+    show ? "block" : "none";
+
+    document.getElementById("throwBtn").style.display =
+    show ? "block" : "none";
+
+    document.getElementById("rollBtn").style.display =
+    show ? "none" : "block";
 }
 
 // ---------------- ROLL ----------------
@@ -196,35 +431,47 @@ document.getElementById("rollBtn").onclick = () => {
 
     const rand = Math.floor(Math.random() * 3);
 
-    state.tempPet = { ...pets[rand] };
+    state.tempPet =
+    JSON.parse(JSON.stringify(pets[rand]));
 
     updateUI();
 };
 
 // ---------------- SLOT ----------------
 document.getElementById("slot1").onclick = () => {
+
     if (!state.tempPet) return;
+
     state.slots[0] = state.tempPet;
     state.tempPet = null;
+
     updateUI();
 };
 
 document.getElementById("slot2").onclick = () => {
+
     if (!state.tempPet) return;
+
     state.slots[1] = state.tempPet;
     state.tempPet = null;
+
     updateUI();
 };
 
 document.getElementById("slot3").onclick = () => {
+
     if (!state.tempPet) return;
+
     state.slots[2] = state.tempPet;
     state.tempPet = null;
+
     updateUI();
 };
 
 document.getElementById("throwBtn").onclick = () => {
+
     state.tempPet = null;
+
     updateUI();
 };
 
