@@ -230,6 +230,9 @@ function draw(){
 
     ctx.drawImage(bg,0,0,1024,1024);
 
+    // 공격 이펙트 먼저 그림 (z 아래)
+    renderPetEffects();
+
     renderPlayer();
     renderPets();
     renderMonsters();
@@ -252,6 +255,44 @@ function renderPlayer(){
         100,
         100
     );
+}
+
+// ---------------- PET EFFECT ----------------
+function renderPetEffects(){
+
+    const pos = [
+        {x:player.x, y:player.y - 120},
+        {x:player.x + 90, y:player.y + 90},
+        {x:player.x - 90, y:player.y + 90}
+    ];
+
+    for(let i=0;i<3;i++){
+
+        const pet = state.slots[i];
+
+        if(!pet) continue;
+
+        const elapsed = Date.now() - pet.effect;
+
+        if(elapsed > 250) continue;
+
+        const alpha = 1 - (elapsed / 250);
+
+        ctx.beginPath();
+
+        ctx.arc(
+            pos[i].x + 50,
+            pos[i].y + 50,
+            pet.range,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fillStyle =
+        `rgba(255,0,0,${alpha * 0.35})`;
+
+        ctx.fill();
+    }
 }
 
 // ---------------- PETS ----------------
@@ -279,23 +320,6 @@ function renderPets(){
             100,
             100
         );
-
-        // 공격 이펙트
-        if(Date.now() - pet.effect < 100){
-
-            ctx.beginPath();
-
-            ctx.arc(
-                pos[i].x + 50,
-                pos[i].y + 50,
-                pet.range,
-                0,
-                Math.PI * 2
-            );
-
-            ctx.fillStyle = "rgba(255,0,0,0.3)";
-            ctx.fill();
-        }
     }
 }
 
